@@ -25,7 +25,7 @@ public class DbService(MasterContext data) : IDbService
         //Ustawia na ostatnia strone jesli jest za duze
         if (page > numberOfPages) page = numberOfPages;
         
-        var returnedTrips = trips.Skip(page * pageSize).Take(pageSize).ToList();
+        var returnedTrips = trips.Skip((page-1) * pageSize).Take(pageSize).ToList();
         return new TripPageGetDto
         {
             PageNum = page,
@@ -43,6 +43,7 @@ public class DbService(MasterContext data) : IDbService
             Description = t.Description,
             DateFrom = t.DateFrom,
             DateTo = t.DateTo,
+            MaxPeople = t.MaxPeople,
             Countries = t.IdCountries.Select(c => new CountryGetDto
             {
                 Name = c.Name
@@ -62,12 +63,12 @@ public class DbService(MasterContext data) : IDbService
         var client = await data.Clients
             .Include(client => client.ClientTrips)
             .FirstOrDefaultAsync(c => c.IdClient == idClient);
-        if (client != null)
+        if (client == null)
         {
             throw new NotFoundException($"Client with id {idClient} not found");
         }
 
-        if (client!.ClientTrips.Count != 0)
+        if (client.ClientTrips.Count != 0)
         {
             throw new BadRequestException($"Client with id {idClient} has atleast one trip");
         }

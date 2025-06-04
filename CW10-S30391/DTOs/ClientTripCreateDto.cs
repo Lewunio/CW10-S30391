@@ -31,8 +31,6 @@ public class ClientTripCreateDto
     [MaxLength(120)]
     public string TripName { get; set; } = null!;
     
-    [Required]
-    [MaxLength(120)]
     public DateTime? PaymentDate { get; set; } 
     
 }
