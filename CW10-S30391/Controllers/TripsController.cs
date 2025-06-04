@@ -1,4 +1,6 @@
-﻿using CW10_S30391.Services;
+﻿using CW10_S30391.DTOs;
+using CW10_S30391.Exceptions;
+using CW10_S30391.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CW10_S30391.Controllers;
@@ -19,6 +21,24 @@ public class TripsController(IDbService service) : ControllerBase
         {
             var result = await service.GetTripsPagedAsync((int)page, pageSize);
             return Ok(result);
+        }
+    }
+
+    [HttpPost("{id}/clients")]
+    public async Task<IActionResult> AddTripToClient([FromRoute] int id,[FromBody] ClientTripCreateDto body)
+    {
+        try
+        {
+            await service.AddClientToTripAsync(id, body);
+            return Ok();
+        }
+        catch (BadRequestException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (NotFoundException e)
+        {
+            return NotFound(e.Message);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using CW10_S30391.Data;
 using CW10_S30391.DTOs;
 using CW10_S30391.Exceptions;
+using CW10_S30391.Models;
 using Microsoft.EntityFrameworkCore;
 namespace CW10_S30391.Services;
 
@@ -9,7 +10,7 @@ public interface IDbService
     public Task<TripPageGetDto> GetTripsPagedAsync(int page, int pageSize);
     public Task<ICollection<TripGetDto>> GetTripsAsync();
     public Task DeleteClientAsync(int idClient);
-    public Task AddClientToTripAsync(ClientTripCreateDto body);
+    public Task AddClientToTripAsync(int id, ClientTripCreateDto body);
 }
 
 public class DbService(MasterContext data) : IDbService
@@ -75,8 +76,50 @@ public class DbService(MasterContext data) : IDbService
         await data.SaveChangesAsync();
     }
 
-    public async Task AddClientToTripAsync(ClientTripCreateDto body)
+    public async Task AddClientToTripAsync(int id,ClientTripCreateDto body)
     {
-        throw new NotImplementedException();
+        var trip = await data.Trips.FirstOrDefaultAsync(t => t.IdTrip == id);
+        if (trip == null)
+        {
+            throw new NotFoundException($"Trip with id {id} not found");
+        }
+
+        if (trip.DateFrom < DateTime.Now)
+        {
+            throw new BadRequestException($"Trip with id {id} has expired");
+        }
+        
+        var client = await data.Clients.FirstOrDefaultAsync(c => c.Pesel == body.Pesel);
+        if (client != null)
+        {
+            throw new BadRequestException($"Client with PESEL {body.Pesel} already exists");
+        }
+        
+        var clientTrip = await data.ClientTrips.FirstOrDefaultAsync(ct => ct.IdClientNavigation.Pesel == body.Pesel && ct.IdTrip == id);
+        if (clientTrip != null)
+        {
+            throw new BadRequestException($"Client with PESEL {body.Pesel} already is signed on trip with id {id}");
+        }
+
+        var clientCreate = new Client
+        {
+            FirstName = body.FirstName,
+            LastName = body.LastName,
+            Email = body.Email,
+            Telephone = body.Telephone,
+            Pesel = body.Pesel
+        };
+        data.Clients.Add(clientCreate);
+        await data.SaveChangesAsync();
+
+        var clientTripCreate = new ClientTrip
+        {
+            IdClient = clientCreate.IdClient,
+            IdTrip = id,
+            RegisteredAt = DateTime.Now,
+            PaymentDate = body.PaymentDate
+        };
+        data.ClientTrips.Add(clientTripCreate);
+        await data.SaveChangesAsync();
     }
 }
