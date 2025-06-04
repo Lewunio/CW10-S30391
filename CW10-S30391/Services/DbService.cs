@@ -1,8 +1,7 @@
 ﻿using CW10_S30391.Data;
+using CW10_S30391.DTOs;
 using CW10_S30391.Exceptions;
-using CW10_S30391.Models;
 using Microsoft.EntityFrameworkCore;
-
 namespace CW10_S30391.Services;
 
 public interface IDbService

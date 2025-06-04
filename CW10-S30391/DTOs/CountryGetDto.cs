@@ -1,4 +1,4 @@
-﻿namespace CW10_S30391;
+﻿namespace CW10_S30391.DTOs;
 
 public class CountryGetDto
 {
