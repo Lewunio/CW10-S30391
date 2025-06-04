@@ -1,4 +1,5 @@
 ﻿using CW10_S30391.Data;
+using CW10_S30391.Exceptions;
 using CW10_S30391.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,7 +59,21 @@ public class DbService(MasterContext data) : IDbService
 
     public async Task DeleteClientAsync(int idClient)
     {
-        throw new NotImplementedException();
+        var client = await data.Clients
+            .Include(client => client.ClientTrips)
+            .FirstOrDefaultAsync(c => c.IdClient == idClient);
+        if (client != null)
+        {
+            throw new NotFoundException($"Client with id {idClient} not found");
+        }
+
+        if (client!.ClientTrips.Count != 0)
+        {
+            throw new BadRequestException($"Client with id {idClient} has atleast one trip");
+        }
+        
+        data.Clients.Remove(client);
+        await data.SaveChangesAsync();
     }
 
     public async Task AddClientToTripAsync(ClientTripCreateDto body)
